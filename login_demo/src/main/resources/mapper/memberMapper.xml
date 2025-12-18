@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.login_demo.dao.MemberMapper">
+
+
+    <insert id = "insertMember" parameterType= "com.example.login_demo.vo.MemberVO">
+
+        insert into member
+        (member_id,
+            member_pw,
+            member_name,
+            email,
+            enabled)
+        values
+        (#{memberId},
+            #{memberPw},
+            #{memberName},
+            #{email},
+            #{enabled})
+
+    </insert>
+
+    <select id="selectById" parameterType="java.lang.String" resultType="com.example.login_demo.vo.MemberVO">
+        SELECT member_id, member_pw, member_name, email, enabled
+        FROM member
+        WHERE member_id = #{memberId}
+    </select>
+
+    <select id="existsById" parameterType="java.lang.String" resultType="int">
+        SELECT COUNT(1) FROM member WHERE member_id = #{memberId}
+    </select>
+
+</mapper>
