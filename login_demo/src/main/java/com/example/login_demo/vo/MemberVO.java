@@ -1,56 +1,34 @@
 package com.example.login_demo.vo;
 
 
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
 
-@Getter
-@Setter
+import java.time.LocalDateTime;
+
+@Data
 public class MemberVO {
 
-    private String memberId;
-    private String memberPw;
-    private String memberName;
-    private String email;
+    private String userId;
+    private String userPw;
+    private String userNm;
+    private String userEmail;
+    private String userStatus;
+    private String userLoginFailCnt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime userLogindate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime userCreatedate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime userUpdatedate;
+
+
+
+
+
     private boolean enabled;
 
-    public String getMemberId() {
-        return memberId;
-    }
-
-    public void setMemberId(String memberId) {
-        this.memberId = memberId;
-    }
-
-    public String getMemberPw() {
-        return memberPw;
-    }
-
-    public void setMemberPw(String memberPw) {
-        this.memberPw = memberPw;
-    }
-
-    public String getMemberName() {
-        return memberName;
-    }
-
-    public void setMemberName(String memberName) {
-        this.memberName = memberName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
 }
