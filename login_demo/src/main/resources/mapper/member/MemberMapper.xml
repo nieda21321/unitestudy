@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.login_demo.mapper.member.MemberMapper">
+
+    <!-- 1. 회원가입 -->
+    <insert id="insertMember" parameterType="MemberVO">
+
+        INSERT
+        INTO
+            member (
+            user_id,
+            user_pw,
+            user_nm,
+            user_email)
+        VALUES (
+            #{userId},
+            #{userPw},
+            #{userNm},
+            #{userEmail}
+        )
+
+    </insert>
+
+    <!-- 2. 로그인 사용자 확인 -->
+    <select id="selectMemberById" parameterType="String" resultType="MemberVO">
+
+        SELECT
+            user_id,
+            user_pw,
+            user_auth,
+            user_nm,
+            user_email,
+            user_status,
+            user_login_fail_cnt,
+            user_logindate,
+            user_createdate,
+            user_updatedate
+        FROM member
+        WHERE user_id = #{userId}
+
+    </select>
+
+    <!-- 3. 비밀번호 수정 -->
+    <!-- 시큐리티 사용시 비밀번호 검증은 쿼리에서 하지 않는다.-->
+    <update id="updateMemberPassword" parameterType="MemberVO">
+
+        UPDATE
+            member
+        SET
+            user_pw = #{userNewPw},
+            user_updatedate = NOW()
+        WHERE 1=1
+        AND user_id = #{userId}
+
+    </update>
+
+    <!-- 4. 로그인 실패 시 횟수 증가 -->
+    <update id="increaseLoginFailCnt" parameterType="String">
+
+        UPDATE
+            member
+        SET
+            user_login_fail_cnt = user_login_fail_cnt + 1
+        WHERE 1=1
+        AND user_id = #{userId}
+
+    </update>
+
+    <!-- 5. 로그인 실패 시 계정 잠금 처리 -->
+    <update id="lockMemberId" parameterType="String">
+
+        UPDATE
+            memeber
+        SET
+            user_status = '20'
+        WHERE 1=1
+        AND user_id = #{userId}
+        AND user_login_fail_cnt >= 5
+
+    </update>
+
+    <!-- 6. 계정 잠금 해제 처리 -->
+    <update id="unlockMemberId" parameterType="String">
+
+        UPDATE
+            memeber
+        SET
+            user_status = '10',
+            user_login_fail_cnt = 0
+        WHERE 1=1
+        AND user_id = #{userId}
+        AND user_status = '20'
+        AND user_login_fail_cnt >= 5
+
+    </update>
+
+    <!-- 7. 계정 잠금 해제 처리 -->
+    <update id="resetLoginFailCnt" parameterType="String">
+
+        UPDATE
+            memeber
+        SET
+            user_login_fail_cnt = 0
+        WHERE 1=1
+        AND user_id = #{userId}
+        AND user_status = '10'
+
+    </update>
+
+
+</mapper>

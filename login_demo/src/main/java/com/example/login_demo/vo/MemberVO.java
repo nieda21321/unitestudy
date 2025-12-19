@@ -10,11 +10,11 @@ import java.time.LocalDateTime;
 public class MemberVO {
 
     private String userId;
-    private String userPw;
+    private String userPw; // 해시값 비밀번호
     private String userNm;
     private String userEmail;
     private String userStatus;
-    private String userLoginFailCnt;
+    private Integer userLoginFailCnt;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime userLogindate;
@@ -26,9 +26,11 @@ public class MemberVO {
     private LocalDateTime userUpdatedate;
 
 
-
-
-
-    private boolean enabled;
-
+    //================================================================
+    // 시큐리티 사용 시 비밀번호 변경기능 시 평문용 비밀번호 체크 두 변수 필요
+    //================================================================
+    // 기존 평문 비밀번호
+    private String userOldPw;
+    // 새로운 평문 비밀번호
+    private String userNewPw;
 }

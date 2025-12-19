@@ -4,8 +4,10 @@ import com.example.login_demo.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,9 +34,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
-    private final PasswordEncoder passwordEncoder;
-
+    private final CustomUserDetailsService customUserDetailsService;
 
     //  filterChain == 스프링 시큐리티의 핵심 설정 메서드로, HTTP 요청에 대한 보안 정책을 정한다.
     @Bean
@@ -43,10 +43,16 @@ public class SecurityConfig {
         http
                 // CSRF 공격 방어 기능을 비활성화한다. 학습용이나 API 용도일 때 자주 끈다.
                 .csrf(csrf -> csrf.disable())
+
+                // 사용자 인증 설정
+                .userDetailsService(customUserDetailsService)
+
                 // URL별 접근 권한 규칙을 정의
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/signup", "/signupProc", "/css/**", "/js/**", "/error").permitAll()
                         .requestMatchers("/WEB-INF/views/**").permitAll()  // forward 허용
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 /*
@@ -59,7 +65,10 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/loginProc")
+                        .usernameParameter("userId")
+                        .passwordParameter("userPw")
                         .defaultSuccessUrl("/home", false)
+                        .failureUrl("/login?error")
                         .permitAll()
                 )
                 /*
@@ -72,6 +81,7 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login")
                         .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 );
 
@@ -79,6 +89,15 @@ public class SecurityConfig {
         return http.build();
     }
 
+
+    // AuthenticationManager 등록 ( 비밀번호 비교에 필수 )
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+
+        return configuration.getAuthenticationManager();
+    }
+
+    /* 이건 커스텀할때 사용함
     @Bean
     public AuthenticationProvider authenticationProvider() {
 
@@ -90,4 +109,5 @@ public class SecurityConfig {
         provider.setPasswordEncoder(passwordEncoder);
         return provider;
     }
+    */
 }

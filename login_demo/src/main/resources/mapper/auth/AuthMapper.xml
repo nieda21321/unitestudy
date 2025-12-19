@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.login_demo.mapper.auth.AuthMapper">
+
+    <!-- 2. 로그인 사용자 확인 -->
+    <select id="selectMemeberAuthById" parameterType="String" resultType="AuthVO">
+
+        SELECT
+            b.auth_detail_cd,
+            c.auth_cd
+        FROM
+            MEMBER a,
+            authdetail b,
+            auth c
+        WHERE 1 = 1
+            AND a.user_id = b.user_id
+            AND b.auth_cd = c.auth_cd
+            AND a.user_id = #{userId}
+
+    </select>
+
+
+</mapper>
