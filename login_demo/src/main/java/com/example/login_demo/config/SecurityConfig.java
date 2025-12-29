@@ -1,16 +1,15 @@
 package com.example.login_demo.config;
 
+import com.example.login_demo.security.CustomAuthenticationFailureHandler;
+import com.example.login_demo.security.CustomAuthenticationSuccessHandler;
 import com.example.login_demo.security.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 
@@ -35,6 +34,12 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
+
+    // 성공핸들러
+    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+
+    // 실패핸들러
+    private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
 
     //  filterChain == 스프링 시큐리티의 핵심 설정 메서드로, HTTP 요청에 대한 보안 정책을 정한다.
     @Bean
@@ -67,8 +72,10 @@ public class SecurityConfig {
                         .loginProcessingUrl("/loginProc")
                         .usernameParameter("userId")
                         .passwordParameter("userPw")
-                        .defaultSuccessUrl("/home", false)
-                        .failureUrl("/login?error")
+                        //.defaultSuccessUrl("/home", false)
+                        .successHandler(customAuthenticationSuccessHandler)
+                        //.failureUrl("/login?error")
+                        .failureHandler(customAuthenticationFailureHandler)
                         .permitAll()
                 )
                 /*

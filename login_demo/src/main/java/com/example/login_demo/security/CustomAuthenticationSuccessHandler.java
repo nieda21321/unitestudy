@@ -25,7 +25,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             HttpServletResponse response,
             FilterChain chain,
             Authentication authentication) throws IOException, ServletException {
-
+        
+        // 로그인 시도한 아이디
         String userId = authentication.getName();
 
         //AuthenticationSuccessHandler.super.onAuthenticationSuccess(request, response, chain, authentication);

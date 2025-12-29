@@ -1,18 +1,26 @@
 package com.example.login_demo.service.member;
 
 import com.example.login_demo.mapper.member.MemberMapper;
+import com.example.login_demo.security.PasswordChangedEvent;
 import com.example.login_demo.security.PasswordEncryptor;
 import com.example.login_demo.vo.MemberVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor // private final 생성자를 만들어준다
+@Transactional
 public class MemberServiceImpl implements MemberService {
 
 
     private final MemberMapper memberMapper;
     private final PasswordEncryptor passwordEncryptor;
+
+    // 인증정보 갱신
+    private final ApplicationEventPublisher applicationEventPublisher;
+
 
     // DB 핸들링 같은건 boolean 타입으로 던지는게 깔끔할 거 같음.
     // 회원가입 시 비밀번호 암호화로 저장
@@ -41,14 +49,23 @@ public class MemberServiceImpl implements MemberService {
         }
 
         // 기존 비밀번호 검증
-        if(passwordEncryptor.matches(memberVO.getUserOldPw(), memberVO.getUserPw())) {
+        if(!passwordEncryptor.matches(memberVO.getUserOldPw(), memberVO.getUserPw())) {
 
             throw new IllegalArgumentException("해당 사용자의 비밀번호가 불일치합니다.");
         }
 
         MemberVO updateMemberVO = new MemberVO();
+        updateMemberVO.setUserId(member.getUserId());
         updateMemberVO.setUserPw(passwordEncryptor.encrypt(memberVO.getUserNewPw()));
 
-        return memberMapper.updateMemberPassword(updateMemberVO);
+        boolean isUpdated = memberMapper.updateMemberPassword(updateMemberVO);
+
+        // 사용자 세션 변경된 비밀번호로 재설정
+        if (isUpdated) {
+            // 이벤트 발생
+            applicationEventPublisher.publishEvent(new PasswordChangedEvent(member.getUserId()));
+        }
+
+        return isUpdated;
     }
 }

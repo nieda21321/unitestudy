@@ -6,11 +6,11 @@
 <mapper namespace="com.example.login_demo.mapper.member.MemberMapper">
 
     <!-- 1. 회원가입 -->
-    <insert id="insertMember" parameterType="MemberVO">
+    <insert id="insertMember" parameterType="com.example.login_demo.vo.MemberVO">
 
         INSERT
         INTO
-            member (
+        member (
             user_id,
             user_pw,
             user_nm,
@@ -25,7 +25,7 @@
     </insert>
 
     <!-- 2. 로그인 사용자 확인 -->
-    <select id="selectMemberById" parameterType="String" resultType="MemberVO">
+    <select id="selectMemberById" parameterType="String" resultType="com.example.login_demo.vo.MemberVO">
 
         SELECT
             user_id,
@@ -45,7 +45,7 @@
 
     <!-- 3. 비밀번호 수정 -->
     <!-- 시큐리티 사용시 비밀번호 검증은 쿼리에서 하지 않는다.-->
-    <update id="updateMemberPassword" parameterType="MemberVO">
+    <update id="updateMemberPassword" parameterType="com.example.login_demo.vo.MemberVO">
 
         UPDATE
             member

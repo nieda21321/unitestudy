@@ -10,21 +10,25 @@ public interface MemberMapper {
     // 1. 회원가입
     boolean insertMember(MemberVO memberVO);
 
+    // CustomUserDetailsService 에서 사용
     // 2. 로그인 사용자 확인
     MemberVO selectMemberById(String userId);
 
     // 3. 비밀번호 수정
     boolean updateMemberPassword(MemberVO memberVO);
 
+    // CustomAuthenticationFailureHandler 에서 사용
     // 4. 로그인 실패 시 횟수 증가
     boolean increaseLoginFailCnt(String userId);
 
+    // CustomAuthenticationFailureHandler 에서 사용
     // 5. 로그인 실패 시 계정 잠금 처리
     boolean lockMemberId(String userId);
 
     // 6. 계정 잠금 해제 처리
     boolean unlockMemberId(String userId);
 
+    // CustomAuthenticationSuccessHandler 에서 사용
     // 7. 로그인 성공 시 마다 누적 실패 횟수 초기화
     boolean resetLoginFailCnt(String userId);
 
