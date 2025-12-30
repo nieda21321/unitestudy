@@ -1,8 +1,9 @@
 package com.example.login_demo.config;
 
-import com.example.login_demo.security.CustomAuthenticationFailureHandler;
-import com.example.login_demo.security.CustomAuthenticationSuccessHandler;
+import com.example.login_demo.jwt.JwtAuthenticationFilter;
+import com.example.login_demo.jwt.JwtTokenProvider;
 import com.example.login_demo.security.CustomUserDetailsService;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,7 +11,12 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 
 
 /**
@@ -36,10 +42,12 @@ public class SecurityConfig {
     private final CustomUserDetailsService customUserDetailsService;
 
     // 성공핸들러
-    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
-
+    // private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
     // 실패핸들러
-    private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
+    // private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
+
+    private final JwtTokenProvider jwtTokenProvider; // 주입 추가
+    private final JwtAuthenticationFilter jwtAuthenticationFilter; // 주입 추가
 
     //  filterChain == 스프링 시큐리티의 핵심 설정 메서드로, HTTP 요청에 대한 보안 정책을 정한다.
     @Bean
@@ -47,26 +55,30 @@ public class SecurityConfig {
 
         http
                 // CSRF 공격 방어 기능을 비활성화한다. 학습용이나 API 용도일 때 자주 끈다.
+                // 1. CSRF 비활성화 (JWT는 세션을 사용하지 않으므로 CSRF 공격에 비교적 안전함)
                 .csrf(csrf -> csrf.disable())
 
-                // 사용자 인증 설정
-                .userDetailsService(customUserDetailsService)
-
-                // URL별 접근 권한 규칙을 정의
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/signup", "/signupProc", "/css/**", "/js/**", "/error").permitAll()
-                        .requestMatchers("/WEB-INF/views/**").permitAll()  // forward 허용
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
-                        .anyRequest().authenticated()
+                // 2. [중요] 세션 관리 정책을 무상태(Stateless)로 설정
+                // 서버에서 세션을 생성하거나 유지하지 않도록 합니다.
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
+                // 3. 폼 로그인 및 HTTP Basic 인증 비활성화
+                // 우리는 이제 JWT 토큰을 직접 주고받을 것이므로 기본 UI 로그인은 끕니다.
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+
                 /*
                     폼 로그인 설정
                     로그인 화면은 /login으로 지정
                     로그인 처리 URL은 /loginProc
-                    로그인 성공 후 기본 이동 페이지는 /home
+                    로그인 성공 후 successHandler
+                    로그인 실패 시에는 failureHandler
                     로그인 페이지 및 관련 URL은 누구나 접근 가능
                  */
+                /*
+                JWT 토큰화 사용시에는 비활성화 처리함
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/loginProc")
@@ -78,6 +90,25 @@ public class SecurityConfig {
                         .failureHandler(customAuthenticationFailureHandler)
                         .permitAll()
                 )
+                */
+
+                // URL별 접근 권한 규칙을 정의
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/login", "/signup", "/signupProc", "/css/**", "/js/**", "/error").permitAll()
+                        .requestMatchers("/WEB-INF/views/**").permitAll()  // forward 허용
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
+                        .anyRequest().authenticated()
+                )
+
+                // 사용자 인증 설정
+                // .userDetailsService(customUserDetailsService)
+
+                // 5. [중요] JWT 인증 필터 배치
+                // UsernamePasswordAuthenticationFilter(기존 폼 로그인 필터)가 작동하기 전에
+                // 우리 가 만든 JWT 필터가 먼저 토큰을 검사하도록 설정합니다.
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
                 /*
                     로그아웃 설정
                     로그아웃 URL은 /logout
@@ -87,8 +118,9 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
+                        // JWT로 더이상 세션 미사용으로 주석처리
+                        //.invalidateHttpSession(true)
+                        //.deleteCookies("JSESSIONID")
                         .permitAll()
                 );
 
@@ -102,6 +134,13 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
 
         return configuration.getAuthenticationManager();
+    }
+
+    // [보안 강화] 비밀키(SecretKey)를 빈으로 등록하여 Provider에서 주입받아 사용
+    @Bean
+    public SecretKey secretKey(JwtProperties jwtProperties) {
+        
+        return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
     /* 이건 커스텀할때 사용함
